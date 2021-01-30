@@ -7,6 +7,7 @@ const Discord = require("discord.js");
 const roomManager   = require("./roomManager");
 const messageSender = require("./messageSender");
 const usernames     = require("./usernames");
+const roleManager   = require("./roleManager");
 
 // Config file, this is where our private environment variables are stored.
 const config = require("./config.json");
@@ -17,11 +18,12 @@ const client = new Discord.Client();
 //This is the entrypoint specifically. When this line is hit the bot will go online and start running our code!
 client.login(config.BOT_TOKEN);
 
-// This is our Party file, It defines the environment that we are moving around in
+// This is our Party file, It defines the environment that we are moving around in, we then initialize all of our other helper classes by passing them the client.
 const party = require("./party.json");
 roomManager.letsGetThisPartyStarted(client, party); //Uncomment this when room duplication is turned off.
 messageSender.initialize(client);
 usernames.initialize(client);
+roleManager.initialize(client);
 
 // Get a handle to all of the channels in this server.
 const channelManager = client.channels;
@@ -68,16 +70,12 @@ addCommand("goto", async (args, message) => {
     //If we have a channel ID.
     if(channelID){
       //Try to send this user to a different voice channel
-      try{
-        roomManager.moveUserToChannel(message.author.id, channelID).then(() => {
-          message.reply("Sending user to room:" + room);
-        }).catch((err) => {
-          console.log(err);
-        });
-      }catch(err){
+      roomManager.moveUserToChannel(message.author.id, channelID).then(() => {
+        message.reply("Sending user to room:" + room);
+      }).catch((err) => {
         console.log(err);
         message.reply("You haven't Entered this party yet so you can't move around. Please go to the Front Door.");
-      }
+      });
     }else{
       //IF no channel by that name was found.
       let names = "";
@@ -86,11 +84,11 @@ addCommand("goto", async (args, message) => {
       for(test of channels){
         let channel = test[1];
         if(channel.type === 'voice'){
-          names += channel.name + " ,";
+          names += channel.name + ", ";
         }
       }
 
-      //Do some cleanup so we dont end the array representation with ' ,'
+      //Do some cleanup so we dont end the array representation with ', '
       if(names.length >= 2){
         names = names.substring(0, names.length -2);
       }
@@ -171,6 +169,7 @@ get_role_by_name = (nameToFind, roles) => {
     }
 }
 
+//When someone requests entry into a room, you can respond with the allow command.
 addCommand("allow", (args, message) => {
   roomManager.allowUserToEnter(message.author.id, args[0].substring(3, args[0].length-1));
 });

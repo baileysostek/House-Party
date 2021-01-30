@@ -5,6 +5,7 @@ var PARTY_STARTED = false;
 //Imports
 const messageSender = require('./messageSender');
 const usernames     = require("./usernames");
+const roleManager   = require("./roleManager");
 
 /*  NOTE these are some useful flags that can be put on channels to limit what actions users can do
   ADMINISTRATOR (implicitly has all permissions, and bypasses all channel overwrites)
@@ -158,17 +159,26 @@ module.exports = {
 
   // A function that detetmines if a user can enter a room or not, This reads the entrypermissions of a room and is a constraint solver.
   canEnterRoomByID: function(userID, roomID){
+    //Lets see if we have an entry for the room that these clients are trying to enter.
     if(this.CHANNEL_ID_TO_ROOM_NAME_MAP[roomID]){
+      //Lets get the stored room name for this room ID.
       let roomName = this.CHANNEL_ID_TO_ROOM_NAME_MAP[roomID];
+
+      //Look through our Room construction file to get data about this room
       if(this.ROOMS[roomName]){
+        //Get Room Meta Data.
         let roomData = this.ROOMS[roomName];
+        
+        //If this Room has entry permissions.
         if(roomData['entry_permission']){
 
+          //Get the permissions
           let permissions = roomData['entry_permission'];
-          console.log("Permissions:", permissions);
           
+          //Store the rule CONSTANT as a capital enumerative type.
           let rule = permissions.rule.toUpperCase();
 
+          //Look to see if we have a rule for this entry_permission type.
           switch(rule) {
             case "OWNER":
               text = "Banana is good!";
@@ -176,27 +186,46 @@ module.exports = {
             case "HOLDING":
               text = "I am not a fan of orange.";
               break;
-            case "FIRST_OCCUPANT":
+            /*
+              IF a room is set to FIRST_OCCUPANT, when you are in a room and someone else would like to enter, you will be prompted to allow them in. 
+              They will not be able to enter until you allow them in with "!allow @username"
+            */
+            case "FIRST_OCCUPANT":{
+              //Grab the meta-data
               let meta = permissions.meta;
               //Lets see if this room has any occupants first
               if(roomData.occupants.size >= 1){
                 //We return false because we are not allowing immidate entry.
-                messageSender.replyToLastMessageFromUser(userID, meta.try_entry_message);
 
                 let otherUser = usernames.getUsernameFromID(userID);
                 let firstOccupantInRoom = roomData.occupants.keys().next().value;
+                
+                //Make sure we are not trying to enter the room we are in. It dosent make sence to give ourselves permission to enter when we are already inside.
+                if(!(userID === firstOccupantInRoom) || true){
+                  //Print the user is trying to enter the room
+                  messageSender.replyToLastMessageFromUser(firstOccupantInRoom, meta.try_entry_message + " @" + otherUser + " is requesting entry to the room you are in. To allow them to enter reply \"!allow @"+otherUser+"\" otherwise ignore them.");
+                  
+                  messageSender.replyToLastMessageFromUser(userID, meta.try_entry_message);
 
-                messageSender.replyToLastMessageFromUser(firstOccupantInRoom, "@" + otherUser + " is requesting entry to the room you are in. To allow them to enter reply \"!allow @"+otherUser+"\" otherwise ignore them.");
-                this.ENTRY_REPLY_BUFFER[userID] = (allowerID) => {
-                  console.log("Resolving callback function");
-                  if(allowerID === firstOccupantInRoom){
-                    console.log("The person trying to allow this action is who we expet it to be.");
-                    messageSender.replyToLastMessageFromUser(userID, "@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
-                    this.moveUserToChannel(userID, roomID).then(() => {
-                      console.log("@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
-                    }).catch((err) => {
-                      console.log(err);
-                    });
+                  //Create an entry in our REPLY_BUFFER that is mapped to a function to move the user into this room and send a message that we allowed them to enter.
+                  this.ENTRY_REPLY_BUFFER[userID] = (allowerID) => {
+                    //Make sure the user who is allowing this request is the person who this request was issued to.
+                    if(allowerID === firstOccupantInRoom){
+                      console.log("The person trying to allow this action is who we expet it to be.");
+                      //Send message
+                      messageSender.replyToLastMessageFromUser(userID, "@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
+                      //After sending the message Move the person into this private room.
+                      this.moveUserToChannel(userID, roomID).then(() => {
+                        //Log 
+                        console.log("@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
+
+                        //Now delete the entry from the buffer.
+                        delete ENTRY_REPLY_BUFFER[userID];
+
+                      }).catch((err) => {
+                        console.log(err);
+                      });
+                    }
                   }
                 }
                 return false;
@@ -204,12 +233,27 @@ module.exports = {
                 //There is no-one inside so we can go right in.
                 return true;
               }
+            }
             case "ALL_OCCUPANTS":
               text = "How you like them apples?";
               break;
-            case "HAS_ROLE":
-              text = "How you like them apples?";
-              break;
+            case "HAS_ROLE":{
+              //Grab the meta-data
+              let meta = permissions.meta;
+
+              if(meta.role){
+                let role = meta.role.toUpperCase();
+
+                if(roleManager.userHasRole(userID, role)){
+                  messageSender.replyToLastMessageFromUser(userID, meta.entry_message);
+                  return true;
+                }else{
+                  messageSender.replyToLastMessageFromUser(userID, meta.denied_message);
+                }
+              }
+
+              return false;
+            }
             case "TIME":
               text = "How you like them apples?";
               break;
@@ -220,7 +264,7 @@ module.exports = {
         }
       }
     }else{
-      console.err("Client:" , userID , " tried to travel to a room outside of our partys domain:", roomID);
+      console.error("Client:" , userID , " tried to travel to a room outside of our partys domain:", roomID);
     }
     return true;
   },
@@ -265,6 +309,13 @@ module.exports = {
     return new Promise(async (resolve, reject) => {
       let clientVoice = this.CLIENT.guilds.cache.get('793673031292682272').members.cache.get(clientID).voice;
       let lastChannel = clientVoice.channelID;
+
+      //Check if we are tying to go the channel that we are in
+      if(channelID == lastChannel){
+        messageSender.replyToLastMessageFromUser(clientID, "You are already in the room you are trying to travel to.");
+        return;
+      }
+
       await clientVoice.setChannel(channelID).then(() => {
   
         //IF the discord API was able to perform our action

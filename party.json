@@ -2,6 +2,7 @@
   "description":"Welcome to a representation of Dylans House",
   "rooms":{
     "Dining Room":{
+      "floor":"First Floor",
       "objects":{
         "table":{
           "imobile":true
@@ -23,6 +24,18 @@
         }
       }
     },
+    "Closet":{
+      "nsfw":true,
+      "user_limit":2,
+      "entry_permission":{
+        "rule":"FIRST_OCCUPANT",
+        "meta":{
+          "try_entry_message":"Knock Knock Knock",
+          "entry_message":"scoots over and makes some room...",
+          "denied_message":"There is no response."
+        }
+      }
+    },
     "Kitchen":{
 
     },
@@ -33,7 +46,14 @@
 
     },
     "Rachels Bedroom":{
-
+      "entry_permission":{
+        "rule":"HAS_ROLE",
+        "meta":{
+          "role":"sober",
+          "entry_message":"You are allowed to enter",
+          "denied_message":"In order to enter this room you need to be sober."
+        }
+      }
     },
     "Pongos Bedroom":{
 
