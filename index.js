@@ -3,7 +3,7 @@
 // https://discord.js.org/#/docs/main/stable/general/welcome
 const Discord = require("discord.js");
 
-//Import our classes here
+//Import our other classes here
 const roomManager = require("./roomManager");
 
 // Config file, this is where our private environment variables are stored.
@@ -17,7 +17,7 @@ client.login(config.BOT_TOKEN);
 
 // This is our Party file, It defines the environment that we are moving around in
 const party = require("./party.json");
-// roomManager.letsGetThisPartyStarted(client, party);
+// roomManager.letsGetThisPartyStarted(client, party); //Uncomment this when room duplication is turned off.
 
 // Get a handle to all of the channels in this server.
 const channelManager = client.channels;
@@ -43,7 +43,7 @@ addCommand = (commandName, commandCallback) => {
 //                   Register Command Handlers Here
 //------------------------------------------------------------------------
 addCommand("goto", async (args, message) => {
-  //The first param that someone passes is the room they are going to.
+  //The params that someone passes is the room they are going to.
   let room = "";
   for(let arg of args){
     room+=arg+" ";
@@ -52,11 +52,13 @@ addCommand("goto", async (args, message) => {
     room = room.substring(0, room.length - 1);
   }
 
-  //Lets 
+  //Lets get a handle to the channels/rooms available to us on this server.
   let channels = channelManager.cache;
-  
+
+  // Lets lookup a channel by name and return its channel ID.
   let channelID = searchForChannel(room, channels);
 
+  //If we have a channel ID.
   if(channelID){
     //Try to send this user to a different voice channel
     try{
@@ -73,8 +75,10 @@ addCommand("goto", async (args, message) => {
       message.reply("You haven't Entered this party yet so you can't move around. Please go to the Front Door.");
     }
   }else{
+    //IF no channel by that name was found.
     let names = "";
 
+    //For each voice channel get the name and add it onto our "names" variable.
     for(test of channels){
       let channel = test[1];
       if(channel.type === 'voice'){
@@ -82,10 +86,12 @@ addCommand("goto", async (args, message) => {
       }
     }
 
+    //Do some cleanup so we dont end the array representation with ' ,'
     if(names.length >= 2){
       names = names.substring(0, names.length -2);
     }
 
+    //Send a message that this room does not exist.
     message.reply("Sorry that room does not exist in this house. The only rooms in this house are: [" + names + "]");
   }
 });

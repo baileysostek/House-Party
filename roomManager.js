@@ -36,7 +36,9 @@ var PARTY_STARTED = false;
   MANAGE_EMOJIS
 */
 
+//Define the functions that will be accessable outside of this module(container)
 module.exports = {
+  // This is our initialization function that sets up our house party.
   letsGetThisPartyStarted : function(client, file){
     // If the party is already started, dont restart the party. This is a fake Singleton.
     if(PARTY_STARTED){
@@ -48,21 +50,28 @@ module.exports = {
 
     //Wait for the bot to come online.
     client.on('ready', () => {
+      //Create a container to hold all of our promises.
       let promises = [];
       //When the bot comes online, it returns all of the servers that it is connected to. For each of those...
       for(server of client.guilds.cache){
         // For each room in the rooms array we are loading from JSON...
         for(room in rooms){
+          //TODO search for a room that exists with that name
+          //Print out the room that we are creating
           console.log("Creating:", room);
+          //Add a promise to our promises array that generates this specific room.
           promises.push(this.createRoom(server[1], room, rooms[room]));
         }
       }
 
+      //Now that all our promises have been made, lets execute them all async and wait for them all to finish.
       Promise.all(promises).then(() => {
+        //When all promises finish this code will run.
         console.log("All Rooms Generated.");
         PARTY_STARTED = true;
         console.log("Welcome to " + file.description);
       }).catch((err) => {
+        //If any errors were thrown this code will run.
         console.log(err);
       });
      });
@@ -70,27 +79,40 @@ module.exports = {
 
   //This function creates a new room in our House (a new vouce channel);
   createRoom : function(client, roomName, roomData){
+    //Start by creating a promise that we return at the end of our function.
     let outPromise = new Promise((resolve, reject) => {
-
+      //Server configuration options here!
       let serverOptions = {
-        type: 'voice' 
+        type: 'voice'  //Each room is a voice server Room.
       };
 
+      //Look in the config for a param called NSFW if it exists, mark this as an NSFW room.
       if(roomData['nsfw']){
         serverOptions['nsfw'] = roomData['nsfw'];
       }
 
+      //Look in the config file for a param called user_limit if it exists, dont let more than that many people in this channel.
       if(roomData['user_limit']){
         serverOptions['userLimit'] = roomData['user_limit'];
       }
 
+      //Execute code to create this channel. Pass the server options as the second parameter
       client.channels.create(roomName, serverOptions).then((channel) => {
-        channel.updateOverwrite(channel.guild.roles.everyone, { VIEW_CHANNEL: false });
+        //Set some properties of the channel, make no-one can directly connect to a channel
+        channel.updateOverwrite(channel.guild.roles.everyone, { CONNECT: false });
+        
+        //Set some properties of the channel, make sure everyone can view the channel unless it is hidden
         if(roomData['hidden']){
+          //Hidden rooms can exist, they can be navigated to if someone knows the secret name of the channel.
           channel.updateOverwrite(channel.guild.roles.everyone, { VIEW_CHANNEL: roomData['hidden'] });
+        }else{
+          channel.updateOverwrite(channel.guild.roles.everyone, { VIEW_CHANNEL: true });
         }
+        
+        //Resolve our promise
         return resolve();
       }).catch((err) => {
+        //IF there was an error reject our promise.
         return reject(err);
       });
     });
