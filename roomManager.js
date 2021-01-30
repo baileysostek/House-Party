@@ -56,11 +56,15 @@ module.exports = {
       for(server of client.guilds.cache){
         // For each room in the rooms array we are loading from JSON...
         for(room in rooms){
-          //TODO search for a room that exists with that name
-          //Print out the room that we are creating
-          console.log("Creating:", room);
-          //Add a promise to our promises array that generates this specific room.
-          promises.push(this.createRoom(server[1], room, rooms[room]));
+          //Make sure this room does not already exist.
+          if(!this.searchForChannel(room, client.channels.cache)){
+            //Print out the room that we are creating
+            console.log("Creating:", room);
+            //Add a promise to our promises array that generates this specific room.
+            promises.push(this.createRoom(server[1], room, rooms[room]));
+          }else{
+            console.log("Room:", room, " already exists in this party house!");
+          }
         }
       }
 
@@ -118,6 +122,35 @@ module.exports = {
     });
     return outPromise;
   },
+
+  // A function that detetmines if a user can enter a room or not, This reads the entrypermissions of a room and is a constraint solver.
+  canEnterRoom: function(client, roomName, roomData){
+
+  },
+
+  /*
+    Pass this a string Name and a list of the channels. This returns the unique Channel ID to connect to or false.
+  */
+  searchForChannel: function(name, channels, type = "voice"){
+    // Loop through each channel
+    for(test of channels){
+      // Get a handle to the Channel object. Index 0 is the ID of the channel, index 1 is the actual channel object with properties
+      let channel = test[1];
+      // Check if this is a voice channel
+      if(channel.type === type){
+        //Hold onto name, lets send it to lowercase to be case-insensative for people switching channels
+        let channelName = channel.name.toLowerCase();
+
+        // Check if the name matches the name property of the channel
+        if(channelName === name.toLowerCase()){
+          // Bots send people to channels based off of channel ID, not name. return the channel ID if we found a channel matching what was requested of us.
+          return channel.id;
+        }
+      }
+    }
+    //IF we found nothing return false
+    return false;
+  }
 
   //If you are making a new function make sure to add a comma to the end of the function above this ^^
 }

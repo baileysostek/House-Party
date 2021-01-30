@@ -17,7 +17,7 @@ client.login(config.BOT_TOKEN);
 
 // This is our Party file, It defines the environment that we are moving around in
 const party = require("./party.json");
-// roomManager.letsGetThisPartyStarted(client, party); //Uncomment this when room duplication is turned off.
+roomManager.letsGetThisPartyStarted(client, party); //Uncomment this when room duplication is turned off.
 
 // Get a handle to all of the channels in this server.
 const channelManager = client.channels;
@@ -56,7 +56,7 @@ addCommand("goto", async (args, message) => {
   let channels = channelManager.cache;
 
   // Lets lookup a channel by name and return its channel ID.
-  let channelID = searchForChannel(room, channels);
+  let channelID = roomManager.searchForChannel(room, channels);
 
   //If we have a channel ID.
   if(channelID){
@@ -64,14 +64,15 @@ addCommand("goto", async (args, message) => {
     try{
       await message.guild.member(message.author.id).voice.setChannel(channelID).then(() => {
         //IF the discord API was able to perform our action
-        return resolve();
+        
       }).catch((err) => {
         //IF there was an error.
-        return resolve();
+        
       });
 
       message.reply("Sending user to room:" + room);
     }catch(err){
+      console.log(err);
       message.reply("You haven't Entered this party yet so you can't move around. Please go to the Front Door.");
     }
   }else{
@@ -121,28 +122,3 @@ client.on("message", (message) => {
   }
 
 });
-
-
-/*
-  Pass this a string Name and a list of the channels. This returns the unique Channel ID to connect to or false.
-*/
-searchForChannel = (name, channels) => {
-  // Loop through each channel
-  for(test of channels){
-    // Get a handle to the Channel object. Index 0 is the ID of the channel, index 1 is the actual channel object with properties
-    let channel = test[1];
-    // Check if this is a voice channel
-    if(channel.type === 'voice'){
-      //Hold onto name, lets send it to lowercase to be case-insensative for people switching channels
-      let channelName = channel.name.toLowerCase();
-
-      // Check if the name matches the name property of the channel
-      if(channelName === name.toLowerCase()){
-        // Bots send people to channels based off of channel ID, not name. return the channel ID if we found a channel matching what was requested of us.
-        return channel.id;
-      }
-    }
-  }
-  //IF we found nothing return false
-  return false;
-}
