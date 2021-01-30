@@ -46,16 +46,22 @@ client.on("message", (message) => {
   Pass this a string Name and a list of the channels. This returns the unique Channel ID to connect to or false.
 */
 searchForChannel = (name, channels) => {
+  // Loop through each channel
   for(test of channels){
+    // Get a handle to the Channel object. Index 0 is the ID of the channel, index 1 is the actual channel object with properties
     let channel = test[1];
+    // Check if this is a voice channel
     if(channel.type === 'voice'){
+      // Check if the name matches the name property of the channel
       if(channel.name === name){
+        // Bots send people to channels based off of channel ID, not name. return the channel ID if we found a channel matching what was requested of us.
         return channel.id;
       }
     }
   }
-
+  //IF we found nothing return false
   return false;
 }
 
+//This is the entrypoint specifically. When this line is hit the bot will go online and start running our code!
 client.login(config.BOT_TOKEN);
