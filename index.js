@@ -31,7 +31,7 @@ addCommand = (commandName, commandCallback) => {
 //------------------------------------------------------------------------
 //                   Register Command Handlers Here
 //------------------------------------------------------------------------
-addCommand("goto", (args) => {
+addCommand("goto", (args, message) => {
   const room = args[0];
 
   let channels = message.guild.channels.cache;
@@ -74,7 +74,7 @@ client.on("message", (message) => {
   //This sees if there is a Key on COMMANDS named command, returns true if the key exists.
   if(COMMANDS[command]){
     //adding parens at the end of dereferencing the array evalues the function stored in the COMMANDS array at "command" with the parameters args.
-    COMMANDS[command](args);
+    COMMANDS[command](args, message);
   }
 
 });
