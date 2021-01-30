@@ -1,0 +1,47 @@
+{
+  "description":"Welcome to a representation of Dylans House",
+  "rooms":{
+    "Dining Room":{
+      "objects":{
+        "table":{
+          "imobile":true
+        },
+        "chair":{
+
+        }
+      }
+    },
+    "Bathroom":{
+      "nsfw":true,
+      "user_limit":3,
+      "entry_permission":{
+        "rule":"FIRST_OCCUPANT",
+        "meta":{
+          "try_entry_message":"Knock Knock Knock",
+          "entry_message":"scoots over and makes some room...",
+          "denied_message":"There is no response."
+        }
+      }
+    },
+    "Kitchen":{
+
+    },
+    "Living Room":{
+
+    },
+    "Dylans Bedroom":{
+
+    },
+    "Rachels Bedroom":{
+
+    },
+    "Pongos Bedroom":{
+
+    }
+  },
+  "roles":[
+    "Drunk",
+    "Sober",
+    "High"
+  ]
+}
