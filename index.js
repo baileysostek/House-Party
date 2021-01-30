@@ -31,7 +31,7 @@ client.on("message", (message) => {
         let channel = test[1];
         names += channel.name + " ,"
       }
-      names = names.substring(0, names.lenght -2);
+      names = names.substring(0, names.length -2);
 
       message.reply("Sorry that room does not exist in this house. The only rooms in this house are: [" + names + "]");
     }
@@ -42,6 +42,9 @@ client.on("message", (message) => {
   }
 });
 
+/*
+  Pass this a string Name and a list of the channels. This returns the unique Channel ID to connect to or false.
+*/
 searchForChannel = (name, channels) => {
   for(test of channels){
     let channel = test[1];
