@@ -52,6 +52,19 @@ addCommand("goto", (args, message) => {
     message.reply("Sorry that room does not exist in this house. The only rooms in this house are: [" + names + "]");
   }
 });
+
+addCommand("drink", (args, message) => {
+  const room = args[0];
+
+  let rolesManager = message.member.roles;
+
+  if(rolesManager.cache.array().includes('Drunk')){ // check if user is already drunk 
+    message.reply("You're getting drunker"); //TODO: random messages
+  }else{
+    message.reply("You Take a Drink");
+    rolesManager.add('Drunk');
+  }
+});
 //------------------------------------------------------------------------
 
 
