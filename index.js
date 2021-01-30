@@ -73,18 +73,84 @@ addCommand("goto", async (args, message) => {
   }
 });
 
-addCommand("drink", (args, message) => {
+addCommand("drink", async (args, message) => {
   const room = args[0];
-
   let rolesManager = message.member.roles;
-
-  if(rolesManager.cache.array().includes('Drunk')){ // check if user is already drunk 
-    message.reply("You're getting drunker"); //TODO: random messages
+  let guildRoles = message.guild.roles.cache;
+  let drunk_role = get_role_by_name('Drunk', guildRoles);
+  let sober_role = get_role_by_name('Sober', guildRoles);
+  let is_drunk = get_role_by_name('Drunk', rolesManager.cache)
+  //console.log(guildRoles); 
+  if(!is_drunk){ // check if user is already drunk 
+    try{
+      await rolesManager.remove(sober_role).then(() => {
+        //IF the discord API was able to perform our action
+        rolesManager.add(drunk_role).then(() => {
+          //IF the discord API was able to perform our action
+          return resolve();
+        }).catch((err) => {
+          //IF there was an error.
+          return resolve();
+        });
+        return resolve();
+      }).catch((err) => {
+        //IF there was an error.
+        return resolve();
+      });
+           
+    }catch(err){
+      console.log(err);
+    }
+    message.reply("You Take a Drink"); //TODO: random messages
   }else{
-    message.reply("You Take a Drink");
-    rolesManager.add('Drunk');
+    
+    message.reply("You're Already Drunk!");
   }
 });
+
+addCommand("soberup", async (args, message) => {
+  const room = args[0];
+  let rolesManager = message.member.roles;
+  let guildRoles = message.guild.roles.cache;
+  let drunk_role = get_role_by_name('Drunk', guildRoles);
+  let sober_role = get_role_by_name('Sober', guildRoles);
+  let is_drunk = get_role_by_name('Drunk', rolesManager.cache)
+  //console.log(guildRoles); 
+  if(is_drunk){ // check if user is already drunk 
+    try{
+      await rolesManager.remove(drunk_role).then(() => {
+        //IF the discord API was able to perform our action
+        rolesManager.add(sober_role).then(() => {
+          //IF the discord API was able to perform our action
+          return resolve();
+        }).catch((err) => {
+          //IF there was an error.
+          return resolve();
+        });
+        return resolve();
+      }).catch((err) => {
+        //IF there was an error.
+        return resolve();
+      });
+           
+    }catch(err){
+      console.log(err);
+    }
+    message.reply("You've Sobered Up"); //TODO: random messages
+  }else{
+    
+    message.reply("You're Not Drunk");
+  }
+});
+
+get_role_by_name = (nameToFind, roles) => {
+    for(role of roles.array()){
+      if (role.name == nameToFind){
+        return role;
+      }
+    }
+}
+
 //------------------------------------------------------------------------
 
 
