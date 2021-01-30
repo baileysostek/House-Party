@@ -3,15 +3,26 @@
 // https://discord.js.org/#/docs/main/stable/general/welcome
 const Discord = require("discord.js");
 
+//Import our classes here
+const roomManager = require("./roomManager");
+
 // Config file, this is where our private environment variables are stored.
 const config = require("./config.json");
 
 // Get a handle to the client
 const client = new Discord.Client();
 
+//This is the entrypoint specifically. When this line is hit the bot will go online and start running our code!
+client.login(config.BOT_TOKEN);
+
+// This is our Party file, It defines the environment that we are moving around in
+const party = require("./party.json");
+// roomManager.letsGetThisPartyStarted(client, party);
+
 // Get a handle to all of the channels in this server.
 const channelManager = client.channels;
 
+//This is the command prefix, it is how we denote a command.
 const prefix = "!";
 
 // This is where we define our list of commands. This object is used as a hashmap where each key is a command name mapped to a callback function to execute when the command is entered.
@@ -33,7 +44,13 @@ addCommand = (commandName, commandCallback) => {
 //------------------------------------------------------------------------
 addCommand("goto", async (args, message) => {
   //The first param that someone passes is the room they are going to.
-  const room = args[0];
+  let room = "";
+  for(let arg of args){
+    room+=arg+" ";
+  }
+  if(room.length >= 1 && args.length >= 1){
+    room = room.substring(0, room.length - 1);
+  }
 
   //Lets 
   let channels = channelManager.cache;
@@ -123,6 +140,3 @@ searchForChannel = (name, channels) => {
   //IF we found nothing return false
   return false;
 }
-
-//This is the entrypoint specifically. When this line is hit the bot will go online and start running our code!
-client.login(config.BOT_TOKEN);
