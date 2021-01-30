@@ -11,14 +11,14 @@
         }
       }
     },
-    "Bathroom First Floor":{
+    "Bathroom":{
       "nsfw":true,
       "user_limit":3,
       "entry_permission":{
         "rule":"FIRST_OCCUPANT",
         "meta":{
           "try_entry_message":"Knock Knock Knock",
-          "entry_message":"The occupant(s) let you in.",
+          "entry_message":"scoots over and makes some room...",
           "denied_message":"There is no response."
         }
       }

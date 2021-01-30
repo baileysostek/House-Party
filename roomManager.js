@@ -2,6 +2,10 @@
 // const party = require("./party.json");
 var PARTY_STARTED = false;
 
+//Imports
+const messageSender = require('./messageSender');
+const usernames     = require("./usernames");
+
 /*  NOTE these are some useful flags that can be put on channels to limit what actions users can do
   ADMINISTRATOR (implicitly has all permissions, and bypasses all channel overwrites)
   CREATE_INSTANT_INVITE (create invitations to the guild)
@@ -38,6 +42,13 @@ var PARTY_STARTED = false;
 
 //Define the functions that will be accessable outside of this module(container)
 module.exports = {
+  ROOMS:{},
+  CHANNEL_ID_TO_ROOM_NAME_MAP:{},
+  CLIENT:null,
+
+  //Try Enter Buffer. NOTE a user can only try to go into one place at a time. 
+  ENTRY_REPLY_BUFFER:{},
+
   // This is our initialization function that sets up our house party.
   letsGetThisPartyStarted : function(client, file){
     // If the party is already started, dont restart the party. This is a fake Singleton.
@@ -45,6 +56,14 @@ module.exports = {
       //Do not re-initialize the server.
       return;
     }
+
+    //Store a reference to the Client 
+    this.CLIENT = client;
+
+    //Print out some info!
+    console.log("Getting this party Started!");
+    console.log("Building the house.");
+
     //Load the Rooms
     let rooms = file.rooms;
 
@@ -57,14 +76,20 @@ module.exports = {
         // For each room in the rooms array we are loading from JSON...
         for(room in rooms){
           //Make sure this room does not already exist.
-          if(!this.searchForChannel(room, client.channels.cache)){
+          let channelID = this.searchForChannel(room, client.channels.cache);
+          if(!channelID){
             //Print out the room that we are creating
             console.log("Creating:", room);
             //Add a promise to our promises array that generates this specific room.
             promises.push(this.createRoom(server[1], room, rooms[room]));
           }else{
             console.log("Room:", room, " already exists in this party house!");
+            this.CHANNEL_ID_TO_ROOM_NAME_MAP[channelID] = room;
           }
+
+          //Lets add this room to the list of rooms. We will use this ROOM object as a way to track people and objects as they move around.
+          this.ROOMS[room] = rooms[room];
+          this.ROOMS[room]['occupants'] = new Map();
         }
       }
 
@@ -74,6 +99,10 @@ module.exports = {
         console.log("All Rooms Generated.");
         PARTY_STARTED = true;
         console.log("Welcome to " + file.description);
+
+        //For debug lets print out the rooms
+        console.log(this.ROOMS);
+        console.log(this.CHANNEL_ID_TO_ROOM_NAME_MAP);
       }).catch((err) => {
         //If any errors were thrown this code will run.
         console.log(err);
@@ -102,16 +131,20 @@ module.exports = {
 
       //Execute code to create this channel. Pass the server options as the second parameter
       client.channels.create(roomName, serverOptions).then((channel) => {
-        //Set some properties of the channel, make no-one can directly connect to a channel
-        channel.updateOverwrite(channel.guild.roles.everyone, { CONNECT: false });
         
+        let permissions = { CONNECT: false, VIEW_CHANNEL: true };
+
         //Set some properties of the channel, make sure everyone can view the channel unless it is hidden
         if(roomData['hidden']){
           //Hidden rooms can exist, they can be navigated to if someone knows the secret name of the channel.
-          channel.updateOverwrite(channel.guild.roles.everyone, { VIEW_CHANNEL: roomData['hidden'] });
-        }else{
-          channel.updateOverwrite(channel.guild.roles.everyone, { VIEW_CHANNEL: true });
+          permissions.VIEW_CHANNEL = roomData['hidden'];
         }
+
+        //Set some properties of the channel, make no-one can directly connect to a channel
+        channel.updateOverwrite(channel.guild.roles.everyone, permissions);
+
+        //Add this channel ID to our hashMap
+        this.CHANNEL_ID_TO_ROOM_NAME_MAP[channel.id] = roomName;
         
         //Resolve our promise
         return resolve();
@@ -124,8 +157,83 @@ module.exports = {
   },
 
   // A function that detetmines if a user can enter a room or not, This reads the entrypermissions of a room and is a constraint solver.
-  canEnterRoom: function(client, roomName, roomData){
+  canEnterRoomByID: function(userID, roomID){
+    if(this.CHANNEL_ID_TO_ROOM_NAME_MAP[roomID]){
+      let roomName = this.CHANNEL_ID_TO_ROOM_NAME_MAP[roomID];
+      if(this.ROOMS[roomName]){
+        let roomData = this.ROOMS[roomName];
+        if(roomData['entry_permission']){
 
+          let permissions = roomData['entry_permission'];
+          console.log("Permissions:", permissions);
+          
+          let rule = permissions.rule.toUpperCase();
+
+          switch(rule) {
+            case "OWNER":
+              text = "Banana is good!";
+              break;
+            case "HOLDING":
+              text = "I am not a fan of orange.";
+              break;
+            case "FIRST_OCCUPANT":
+              let meta = permissions.meta;
+              //Lets see if this room has any occupants first
+              if(roomData.occupants.size >= 1){
+                //We return false because we are not allowing immidate entry.
+                messageSender.replyToLastMessageFromUser(userID, meta.try_entry_message);
+
+                let otherUser = usernames.getUsernameFromID(userID);
+                let firstOccupantInRoom = roomData.occupants.keys().next().value;
+
+                messageSender.replyToLastMessageFromUser(firstOccupantInRoom, "@" + otherUser + " is requesting entry to the room you are in. To allow them to enter reply \"!allow @"+otherUser+"\" otherwise ignore them.");
+                this.ENTRY_REPLY_BUFFER[userID] = (allowerID) => {
+                  console.log("Resolving callback function");
+                  if(allowerID === firstOccupantInRoom){
+                    console.log("The person trying to allow this action is who we expet it to be.");
+                    messageSender.replyToLastMessageFromUser(userID, "@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
+                    this.moveUserToChannel(userID, roomID).then(() => {
+                      console.log("@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
+                    }).catch((err) => {
+                      console.log(err);
+                    });
+                  }
+                }
+                return false;
+              }else{
+                //There is no-one inside so we can go right in.
+                return true;
+              }
+            case "ALL_OCCUPANTS":
+              text = "How you like them apples?";
+              break;
+            case "HAS_ROLE":
+              text = "How you like them apples?";
+              break;
+            case "TIME":
+              text = "How you like them apples?";
+              break;
+            default:
+              console.log("The room entry condition of :" + rule + " is not handled by our permission checker yet.");
+              return true;
+          }
+        }
+      }
+    }else{
+      console.err("Client:" , userID , " tried to travel to a room outside of our partys domain:", roomID);
+    }
+    return true;
+  },
+
+  allowUserToEnter: function(userID, otherUserID){
+    if(otherUserID){
+      if(this.ENTRY_REPLY_BUFFER[otherUserID]){
+        this.ENTRY_REPLY_BUFFER[otherUserID](userID);
+        return true;
+      }
+    }
+
+    return false;
   },
 
   /*
@@ -150,7 +258,38 @@ module.exports = {
     }
     //IF we found nothing return false
     return false;
-  }
+  },
+
+  //This function moves a user from one channel to another
+  moveUserToChannel: function(clientID, channelID){
+    return new Promise(async (resolve, reject) => {
+      let clientVoice = this.CLIENT.guilds.cache.get('793673031292682272').members.cache.get(clientID).voice;
+      let lastChannel = clientVoice.channelID;
+      await clientVoice.setChannel(channelID).then(() => {
+  
+        //IF the discord API was able to perform our action
+        let lastRoomOccupants       = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[lastChannel]];
+        if(lastRoomOccupants){
+          let occupatns = lastRoomOccupants.occupants;
+          if(occupatns.has(clientID)){
+            occupatns.delete(clientID);
+          }
+        }
+  
+        let transitionRoomOccupants = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[channelID]];
+        if(transitionRoomOccupants){
+          let occupatns = transitionRoomOccupants.occupants;
+          if(!occupatns.has(clientID)){
+            occupatns.set(clientID, {});
+          }      
+        }
+      
+        return resolve();
+      }).catch((err) => {
+        return reject(err);
+      });
+    });
+  },
 
   //If you are making a new function make sure to add a comma to the end of the function above this ^^
 }

@@ -4,7 +4,9 @@
 const Discord = require("discord.js");
 
 //Import our other classes here
-const roomManager = require("./roomManager");
+const roomManager   = require("./roomManager");
+const messageSender = require("./messageSender");
+const usernames     = require("./usernames");
 
 // Config file, this is where our private environment variables are stored.
 const config = require("./config.json");
@@ -18,6 +20,8 @@ client.login(config.BOT_TOKEN);
 // This is our Party file, It defines the environment that we are moving around in
 const party = require("./party.json");
 roomManager.letsGetThisPartyStarted(client, party); //Uncomment this when room duplication is turned off.
+messageSender.initialize(client);
+usernames.initialize(client);
 
 // Get a handle to all of the channels in this server.
 const channelManager = client.channels;
@@ -58,44 +62,49 @@ addCommand("goto", async (args, message) => {
   // Lets lookup a channel by name and return its channel ID.
   let channelID = roomManager.searchForChannel(room, channels);
 
-  //If we have a channel ID.
-  if(channelID){
-    //Try to send this user to a different voice channel
-    try{
-      await message.guild.member(message.author.id).voice.setChannel(channelID).then(() => {
-        //IF the discord API was able to perform our action
-        
-      }).catch((err) => {
-        //IF there was an error.
-        
-      });
-
-      message.reply("Sending user to room:" + room);
-    }catch(err){
-      console.log(err);
-      message.reply("You haven't Entered this party yet so you can't move around. Please go to the Front Door.");
-    }
-  }else{
-    //IF no channel by that name was found.
-    let names = "";
-
-    //For each voice channel get the name and add it onto our "names" variable.
-    for(test of channels){
-      let channel = test[1];
-      if(channel.type === 'voice'){
-        names += channel.name + " ,";
+  //Check if we can enter this room.
+  let canEnter = roomManager.canEnterRoomByID(message.author.id, channelID);
+  if(canEnter){
+    //If we have a channel ID.
+    if(channelID){
+      //Try to send this user to a different voice channel
+      try{
+        roomManager.moveUserToChannel(message.author.id, channelID).then(() => {
+          message.reply("Sending user to room:" + room);
+        }).catch((err) => {
+          console.log(err);
+        });
+      }catch(err){
+        console.log(err);
+        message.reply("You haven't Entered this party yet so you can't move around. Please go to the Front Door.");
       }
-    }
+    }else{
+      //IF no channel by that name was found.
+      let names = "";
 
-    //Do some cleanup so we dont end the array representation with ' ,'
-    if(names.length >= 2){
-      names = names.substring(0, names.length -2);
-    }
+      //For each voice channel get the name and add it onto our "names" variable.
+      for(test of channels){
+        let channel = test[1];
+        if(channel.type === 'voice'){
+          names += channel.name + " ,";
+        }
+      }
 
-    //Send a message that this room does not exist.
-    message.reply("Sorry that room does not exist in this house. The only rooms in this house are: [" + names + "]");
+      //Do some cleanup so we dont end the array representation with ' ,'
+      if(names.length >= 2){
+        names = names.substring(0, names.length -2);
+      }
+
+      //Send a message that this room does not exist.
+      message.reply("Sorry that room does not exist in this house. The only rooms in this house are: [" + names + "]");
+    }
   }
 });
+
+addCommand("allow", (args, message) => {
+  roomManager.allowUserToEnter(message.author.id, args[0].substring(3, args[0].length-1));
+});
+
 //------------------------------------------------------------------------
 
 
