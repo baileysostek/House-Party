@@ -31,23 +31,43 @@ addCommand = (commandName, commandCallback) => {
 //------------------------------------------------------------------------
 //                   Register Command Handlers Here
 //------------------------------------------------------------------------
-addCommand("goto", (args, message) => {
+addCommand("goto", async (args, message) => {
+  //The first param that someone passes is the room they are going to.
   const room = args[0];
 
-  let channels = message.guild.channels.cache;
+  //Lets 
+  let channels = channelManager.cache;
   
   let channelID = searchForChannel(room, channels);
+
   if(channelID){
-    message.reply("Sending user to room:" + room);
-    message.guild.member(message.author.id).voice.setChannel(channelID);
+    //Try to send this user to a different voice channel
+    try{
+      await message.guild.member(message.author.id).voice.setChannel(channelID).then(() => {
+        //IF the discord API was able to perform our action
+        return resolve();
+      }).catch((err) => {
+        //IF there was an error.
+        return resolve();
+      });
+
+      message.reply("Sending user to room:" + room);
+    }catch(err){
+      message.reply("You haven't Entered this party yet so you can't move around. Please go to the Front Door.");
+    }
   }else{
     let names = "";
 
     for(test of channels){
       let channel = test[1];
-      names += channel.name + " ,"
+      if(channel.type === 'voice'){
+        names += channel.name + " ,";
+      }
     }
-    names = names.substring(0, names.length -2);
+
+    if(names.length >= 2){
+      names = names.substring(0, names.length -2);
+    }
 
     message.reply("Sorry that room does not exist in this house. The only rooms in this house are: [" + names + "]");
   }
@@ -93,8 +113,6 @@ client.on("message", (message) => {
 });
 
 
-
-
 /*
   Pass this a string Name and a list of the channels. This returns the unique Channel ID to connect to or false.
 */
@@ -105,8 +123,11 @@ searchForChannel = (name, channels) => {
     let channel = test[1];
     // Check if this is a voice channel
     if(channel.type === 'voice'){
+      //Hold onto name, lets send it to lowercase to be case-insensative for people switching channels
+      let channelName = channel.name.toLowerCase();
+
       // Check if the name matches the name property of the channel
-      if(channel.name === name){
+      if(channelName === name.toLowerCase()){
         // Bots send people to channels based off of channel ID, not name. return the channel ID if we found a channel matching what was requested of us.
         return channel.id;
       }
