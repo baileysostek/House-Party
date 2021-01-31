@@ -2,6 +2,7 @@
   "description":"Welcome to a representation of Dylans House",
   "rooms":{
     "Dining Room":{
+      "id": "diningroom",
       "objects":{
         "table":{
           "imobile":true
@@ -12,6 +13,7 @@
       }
     },
     "Bathroom First Floor":{
+      "id": "bath1",
       "nsfw":true,
       "user_limit":3,
       "entry_permission":{
@@ -24,19 +26,22 @@
       }
     },
     "Kitchen":{
-
+      "id": "kitchen"
     },
     "Living Room":{
-
+      "id": "livingroom"
     },
     "Dylans Bedroom":{
-
+      "id": "dylanroom"
     },
     "Rachels Bedroom":{
-
+      "id": "dylanroom"
     },
     "Pongos Bedroom":{
-
+      "id": "pongoroom"
+    },
+    "Stairs":{
+      "id": "stairs"
     }
   },
   "roles":[
