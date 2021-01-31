@@ -9,7 +9,10 @@ const cytoscape = require('cytoscape');
 const Discord = require("discord.js");
 
 //Import our other classes here
-const roomManager = require("./roomManager");
+const roomManager   = require("./roomManager");
+const messageSender = require("./messageSender");
+const usernames     = require("./usernames");
+const roleManager   = require("./roleManager");
 
 // Config file, this is where our private environment variables are stored.
 const config = require("./config.json");
@@ -20,9 +23,12 @@ const client = new Discord.Client();
 //This is the entrypoint specifically. When this line is hit the bot will go online and start running our code!
 client.login(config.BOT_TOKEN);
 
-// This is our Party file, It defines the environment that we are moving around in
+// This is our Party file, It defines the environment that we are moving around in, we then initialize all of our other helper classes by passing them the client.
 const party = require("./party.json");
-// roomManager.letsGetThisPartyStarted(client, party); //Uncomment this when room duplication is turned off.
+roomManager.letsGetThisPartyStarted(client, party); //Uncomment this when room duplication is turned off.
+messageSender.initialize(client);
+usernames.initialize(client);
+roleManager.initialize(client);
 
 // Get a handle to all of the channels in this server.
 const channelManager = client.channels;
@@ -61,45 +67,118 @@ addCommand("goto", async (args, message) => {
   let channels = channelManager.cache;
 
   // Lets lookup a channel by name and return its channel ID.
-  let channelID = searchForChannel(room, channels);
+  let channelID = roomManager.searchForChannel(room, channels);
 
-  //If we have a channel ID.
-  if(channelID){
-    //Try to send this user to a different voice channel
-    try{
-      await message.guild.member(message.author.id).voice.setChannel(channelID).then(() => {
-        //IF the discord API was able to perform our action
-        return resolve();
+  //Check if we can enter this room.
+  let canEnter = roomManager.canEnterRoomByID(message.author.id, channelID);
+  if(canEnter){
+    //If we have a channel ID.
+    if(channelID){
+      //Try to send this user to a different voice channel
+      roomManager.moveUserToChannel(message.author.id, channelID).then(() => {
+        message.reply("Sending user to room:" + room);
       }).catch((err) => {
-        //IF there was an error.
-        return resolve();
+        console.log(err);
+        message.reply("You haven't Entered this party yet so you can't move around. Please go to the Front Door.");
       });
+    }else{
+      //IF no channel by that name was found.
+      let names = "";
 
-      message.reply("Sending user to room:" + room);
-    }catch(err){
-      message.reply("You haven't Entered this party yet so you can't move around. Please go to the Front Door.");
-    }
-  }else{
-    //IF no channel by that name was found.
-    let names = "";
-
-    //For each voice channel get the name and add it onto our "names" variable.
-    for(test of channels){
-      let channel = test[1];
-      if(channel.type === 'voice'){
-        names += channel.name + " ,";
+      //For each voice channel get the name and add it onto our "names" variable.
+      for(test of channels){
+        let channel = test[1];
+        if(channel.type === 'voice'){
+          names += channel.name + ", ";
+        }
       }
-    }
 
-    //Do some cleanup so we dont end the array representation with ' ,'
-    if(names.length >= 2){
-      names = names.substring(0, names.length -2);
-    }
+      //Do some cleanup so we dont end the array representation with ', '
+      if(names.length >= 2){
+        names = names.substring(0, names.length -2);
+      }
 
-    //Send a message that this room does not exist.
-    message.reply("Sorry that room does not exist in this house. The only rooms in this house are: [" + names + "]");
+      //Send a message that this room does not exist.
+      message.reply("Sorry that room does not exist in this house. The only rooms in this house are: [" + names + "]");
+    }
   }
 });
+
+addCommand("drink", async (args, message) => {
+  const room = args[0];
+  let rolesManager = message.member.roles;
+  let guildRoles = message.guild.roles.cache;
+  let drunk_role = get_role_by_name('Drunk', guildRoles);
+  let sober_role = get_role_by_name('Sober', guildRoles);
+  let is_drunk = get_role_by_name('Drunk', rolesManager.cache)
+  //console.log(guildRoles); 
+  if(!is_drunk){ // check if user is already drunk 
+    try{
+      await rolesManager.remove(sober_role).then(() => {
+        //IF the discord API was able to perform our action
+        rolesManager.add(drunk_role).then(() => {
+          //IF the discord API was able to perform our action
+        }).catch((err) => {
+
+        });
+      }).catch((err) => {
+        //IF there was an error.
+      });
+           
+    }catch(err){
+      console.log(err);
+    }
+    message.reply("You Take a Drink"); //TODO: random messages
+  }else{
+    
+    message.reply("You're Already Drunk!");
+  }
+});
+
+addCommand("soberup", async (args, message) => {
+  const room = args[0];
+  let rolesManager = message.member.roles;
+  let guildRoles = message.guild.roles.cache;
+  let drunk_role = get_role_by_name('Drunk', guildRoles);
+  let sober_role = get_role_by_name('Sober', guildRoles);
+  let is_drunk = get_role_by_name('Drunk', rolesManager.cache)
+  //console.log(guildRoles); 
+  if(is_drunk){ // check if user is already drunk 
+    try{
+      await rolesManager.remove(drunk_role).then(() => {
+        //IF the discord API was able to perform our action
+        rolesManager.add(sober_role).then(() => {
+          //IF the discord API was able to perform our action
+        }).catch((err) => {
+          //IF there was an error.
+        });
+      }).catch((err) => {
+        //IF there was an error.
+      });
+           
+    }catch(err){
+      console.log(err);
+    }
+    message.reply("You've Sobered Up"); //TODO: random messages
+  }else{
+    
+    message.reply("You're Not Drunk");
+  }
+});
+
+get_role_by_name = (nameToFind, roles) => {
+    for(role of roles.array()){
+      if (role.name == nameToFind){
+        return role;
+      }
+    }
+}
+
+//When someone requests entry into a room, you can respond with the allow command.
+addCommand("allow", (args, message) => {
+  roomManager.allowUserToEnter(message.author.id, args[0].substring(3, args[0].length-1));
+});
+
 //------------------------------------------------------------------------
 
 
@@ -126,28 +205,3 @@ client.on("message", (message) => {
   }
 
 });
-
-
-/*
-  Pass this a string Name and a list of the channels. This returns the unique Channel ID to connect to or false.
-*/
-searchForChannel = (name, channels) => {
-  // Loop through each channel
-  for(test of channels){
-    // Get a handle to the Channel object. Index 0 is the ID of the channel, index 1 is the actual channel object with properties
-    let channel = test[1];
-    // Check if this is a voice channel
-    if(channel.type === 'voice'){
-      //Hold onto name, lets send it to lowercase to be case-insensative for people switching channels
-      let channelName = channel.name.toLowerCase();
-
-      // Check if the name matches the name property of the channel
-      if(channelName === name.toLowerCase()){
-        // Bots send people to channels based off of channel ID, not name. return the channel ID if we found a channel matching what was requested of us.
-        return channel.id;
-      }
-    }
-  }
-  //IF we found nothing return false
-  return false;
-}
