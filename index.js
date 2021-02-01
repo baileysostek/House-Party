@@ -1,3 +1,8 @@
+// Import the cytoscape.js library
+// Documentation:
+// 
+const cytoscape = require('cytoscape');
+
 // Import the discord.js library. 
 // Documentation :
 // https://discord.js.org/#/docs/main/stable/general/welcome
