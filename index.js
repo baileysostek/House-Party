@@ -2,8 +2,8 @@
 // Documentation:
 // https://discord.js.org/#/docs/main/stable/general/welcome
 const Discord = require("discord.js");
-//Cytoscape improt
-const cytoscape = require('cytoscape');
+//Import dotEnv
+require('dotenv').config();
 //Electron Import
 const { app, BrowserWindow } = require('electron');
 //Entry point
@@ -15,14 +15,13 @@ const messageSender = require("./src/discord/messageSender");
 const usernames     = require("./src/discord/usernames");
 const roleManager   = require("./src/discord/roleManager");
 
-// Config file, this is where our private environment variables are stored.
-const config = require("./config.json");
-
 // Get a handle to the client
 const client = new Discord.Client();
 
+console.log(process.env);
+
 //This is the entrypoint specifically. When this line is hit the bot will go online and start running our code!
-client.login(config.BOT_TOKEN);
+client.login(process.env.DISCORD_BOT_TOKEN);
 
 // This is our Party file, It defines the environment that we are moving around in, we then initialize all of our other helper classes by passing them the client.
 const party = require("./party.json");

@@ -2,12 +2,15 @@ const fs                   = require('fs');
 const TextToSpeechV1       = require('ibm-watson/text-to-speech/v1');
 const { IamAuthenticator } = require('ibm-watson/auth');
 const { v4: uuidv4 }       = require('uuid');
+//Import dotEnv
+require('dotenv').config();
+
 
 const textToSpeech = new TextToSpeechV1({
   authenticator: new IamAuthenticator({
-    apikey: 'WITzOJSXTcG5S0pTLL_I7HoLo9XjPMXxZfmeXwFVjY0M',
+    apikey: process.env.IBM_API_KEY,
   }),
-  serviceUrl: 'https://api.us-east.text-to-speech.watson.cloud.ibm.com/instances/368a32c9-a896-4b54-8e20-a5618ea35463',
+  serviceUrl: process.env.IBM_URL,
 });
 
 module.exports = {

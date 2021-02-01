@@ -322,7 +322,7 @@ module.exports = {
 
         const connection = await clientVoice.channel.join();
         // Create a dispatcher
-        const dispatcher = connection.play('./sounds/hello_world_2.wav');
+        const dispatcher = connection.play('sounds/2bfd6ef8-87cb-4a95-9ee6-d348e1fba4f1.wav');
   
         dispatcher.on('start', () => {
           //IF the discord API was able to perform our action
