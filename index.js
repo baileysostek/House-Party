@@ -44,7 +44,6 @@ addCommand = (commandName, commandCallback) => {
   COMMANDS[commandName] = commandCallback;
 }
 
-
 //------------------------------------------------------------------------
 //                   Register Command Handlers Here
 //------------------------------------------------------------------------

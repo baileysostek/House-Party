@@ -204,8 +204,9 @@ module.exports = {
                 if(!(userID === firstOccupantInRoom) || true){
                   //Print the user is trying to enter the room
                   messageSender.replyToLastMessageFromUser(firstOccupantInRoom, meta.try_entry_message + " @" + otherUser + " is requesting entry to the room you are in. To allow them to enter reply \"!allow @"+otherUser+"\" otherwise ignore them.");
+                  messageSender.replyToLastMessageFromUser(userID, meta.try_entry_message + " @" + otherUser + " is requesting entry to the room you are in. To allow them to enter reply \"!allow @"+otherUser+"\" otherwise ignore them.");
                   
-                  messageSender.replyToLastMessageFromUser(userID, meta.try_entry_message);
+                  // messageSender.replyToLastMessageFromUser(userID, meta.try_entry_message);
 
                   //Create an entry in our REPLY_BUFFER that is mapped to a function to move the user into this room and send a message that we allowed them to enter.
                   this.ENTRY_REPLY_BUFFER[userID] = (allowerID) => {
@@ -214,13 +215,14 @@ module.exports = {
                       console.log("The person trying to allow this action is who we expet it to be.");
                       //Send message
                       messageSender.replyToLastMessageFromUser(userID, "@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
+                      messageSender.replyToLastMessageFromUser(firstOccupantInRoom, "@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
                       //After sending the message Move the person into this private room.
                       this.moveUserToChannel(userID, roomID).then(() => {
                         //Log 
                         console.log("@" + usernames.getUsernameFromID(firstOccupantInRoom) + " " + meta.entry_message);
 
                         //Now delete the entry from the buffer.
-                        delete ENTRY_REPLY_BUFFER[userID];
+                        delete this.ENTRY_REPLY_BUFFER[userID];
 
                       }).catch((err) => {
                         console.log(err);
@@ -316,26 +318,37 @@ module.exports = {
         return;
       }
 
-      await clientVoice.setChannel(channelID).then(() => {
+      await clientVoice.setChannel(channelID).then(async () => {
+
+        const connection = await clientVoice.channel.join();
+        // Create a dispatcher
+        const dispatcher = connection.play('./sounds/hello_world_2.wav');
   
-        //IF the discord API was able to perform our action
-        let lastRoomOccupants       = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[lastChannel]];
-        if(lastRoomOccupants){
-          let occupatns = lastRoomOccupants.occupants;
-          if(occupatns.has(clientID)){
-            occupatns.delete(clientID);
+        dispatcher.on('start', () => {
+          //IF the discord API was able to perform our action
+          let lastRoomOccupants       = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[lastChannel]];
+          if(lastRoomOccupants){
+            let occupatns = lastRoomOccupants.occupants;
+            if(occupatns.has(clientID)){
+              occupatns.delete(clientID);
+            }
           }
-        }
+    
+          let transitionRoomOccupants = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[channelID]];
+          if(transitionRoomOccupants){
+            let occupatns = transitionRoomOccupants.occupants;
+            if(!occupatns.has(clientID)){
+              occupatns.set(clientID, {});
+            }      
+          }
+        
+          return resolve();
+        });
   
-        let transitionRoomOccupants = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[channelID]];
-        if(transitionRoomOccupants){
-          let occupatns = transitionRoomOccupants.occupants;
-          if(!occupatns.has(clientID)){
-            occupatns.set(clientID, {});
-          }      
-        }
-      
-        return resolve();
+        dispatcher.on('finish', () => {
+          connection.disconnect();
+        });
+
       }).catch((err) => {
         return reject(err);
       });
