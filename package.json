@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
+    "start": "electron .",
     "visualize": "node visualize_house.js"
   },
   "author": "",
@@ -20,6 +20,7 @@
     "cytoscape": "^3.18.0"
   },
   "devDependencies": {
+    "electron": "^11.2.1",
     "nodemon": "^2.0.7"
   }
 }

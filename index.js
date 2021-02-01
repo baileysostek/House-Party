@@ -1,18 +1,19 @@
 // Import the cytoscape.js library
 // Documentation:
-// 
-const cytoscape = require('cytoscape');
-
-// Import the discord.js library. 
-// Documentation :
 // https://discord.js.org/#/docs/main/stable/general/welcome
 const Discord = require("discord.js");
+//Cytoscape improt
+const cytoscape = require('cytoscape');
+//Electron Import
+const { app, BrowserWindow } = require('electron');
+//Entry point
+const HTML_ENTRY_POINT = "./src/electron/index.html";
 
 //Import our other classes here
-const roomManager   = require("./roomManager");
-const messageSender = require("./messageSender");
-const usernames     = require("./usernames");
-const roleManager   = require("./roleManager");
+const roomManager   = require("./src/discord/roomManager");
+const messageSender = require("./src/discord/messageSender");
+const usernames     = require("./src/discord/usernames");
+const roleManager   = require("./src/discord/roleManager");
 
 // Config file, this is where our private environment variables are stored.
 const config = require("./config.json");
@@ -202,5 +203,31 @@ client.on("message", (message) => {
     //adding parens at the end of dereferencing the array evalues the function stored in the COMMANDS array at "command" with the parameters args.
     COMMANDS[command](args, message);
   }
-
 });
+
+//Electron stuff
+
+function createWindow () {
+  const window = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
+  window.loadFile(HTML_ENTRY_POINT);
+}
+
+app.whenReady().then(createWindow);
+
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
+})
+
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
+})
