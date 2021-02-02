@@ -235,9 +235,3 @@ app.on('activate', () => {
 //   console.log(arg) // prints "ping"
 //   event.reply('asynchronous-reply', party);
 // });
-
-const { ipcMain } = require('electron')
-
-ipcMain.on('getRoomsAndEdges', (event, args) => {
-  event.reply('api-response', [party , args[1]]);
-})

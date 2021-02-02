@@ -1,6 +1,6 @@
 {
   "description":"Welcome to a representation of Dylans House",
-  "rooms":[{
+  "rooms":{
     "Dining Room":{
       "floor":"First Floor",
       "data":{"id": "dining"},
@@ -64,7 +64,7 @@
     "Stairs":{
       "data": {"id": "stairs"}
     }
-  }],
+  },
   "edges": [
     {"data": {"id": "1", "source":"dining", "target": "bathroom"}},
     {"data": {"id": "2", "source":"dining", "target": "closet"}},

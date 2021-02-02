@@ -7,6 +7,7 @@ const messageSender = require('./messageSender');
 const usernames     = require("./usernames");
 const roleManager   = require("./roleManager");
 
+const { ipcMain } = require('electron');
 /*  NOTE these are some useful flags that can be put on channels to limit what actions users can do
   ADMINISTRATOR (implicitly has all permissions, and bypasses all channel overwrites)
   CREATE_INSTANT_INVITE (create invitations to the guild)
@@ -91,6 +92,12 @@ module.exports = {
           //Lets add this room to the list of rooms. We will use this ROOM object as a way to track people and objects as they move around.
           this.ROOMS[room] = rooms[room];
           this.ROOMS[room]['occupants'] = new Map();
+          this.ROOMS[room]['edges'] = {};
+        }
+
+        //Iterate through all edges to build adjasencies list. If the node the user is trying to travel to is not in this list of edges, we call the frontend to compute an a* path to our goal.
+        for(edge of file.edges){
+          console.log("edge:", edge);
         }
       }
 
@@ -108,7 +115,13 @@ module.exports = {
         //If any errors were thrown this code will run.
         console.log(err);
       });
-     });
+    });
+
+    //-------------------------- Define API Endpoints --------------------------------
+    ipcMain.on('getRoomsAndEdges', (event, args) => {
+      event.reply('api-response', [file , args[1]]);
+    })
+    //--------------------------------------------------------------------------------
   },
 
   //This function creates a new room in our House (a new vouce channel);
@@ -168,6 +181,8 @@ module.exports = {
       if(this.ROOMS[roomName]){
         //Get Room Meta Data.
         let roomData = this.ROOMS[roomName];
+
+        //Lets get the edges connected to this room 
         
         //If this Room has entry permissions.
         if(roomData['entry_permission']){
@@ -319,41 +334,46 @@ module.exports = {
       }
 
       await clientVoice.setChannel(channelID).then(async () => {
-
-        const connection = await clientVoice.channel.join();
-        // Create a dispatcher
-        const dispatcher = connection.play('sounds/2bfd6ef8-87cb-4a95-9ee6-d348e1fba4f1.wav');
-  
-        dispatcher.on('start', () => {
-          //IF the discord API was able to perform our action
-          let lastRoomOccupants       = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[lastChannel]];
-          if(lastRoomOccupants){
-            let occupatns = lastRoomOccupants.occupants;
-            if(occupatns.has(clientID)){
-              occupatns.delete(clientID);
-            }
+        //IF the discord API was able to perform our action
+        let lastRoomOccupants       = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[lastChannel]];
+        if(lastRoomOccupants){
+          let occupatns = lastRoomOccupants.occupants;
+          if(occupatns.has(clientID)){
+            occupatns.delete(clientID);
           }
-    
-          let transitionRoomOccupants = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[channelID]];
-          if(transitionRoomOccupants){
-            let occupatns = transitionRoomOccupants.occupants;
-            if(!occupatns.has(clientID)){
-              occupatns.set(clientID, {});
-            }      
-          }
-        
-          return resolve();
-        });
+        }
   
-        dispatcher.on('finish', () => {
-          connection.disconnect();
-        });
-
+        let transitionRoomOccupants = this.ROOMS[this.CHANNEL_ID_TO_ROOM_NAME_MAP[channelID]];
+        if(transitionRoomOccupants){
+          let occupatns = transitionRoomOccupants.occupants;
+          if(!occupatns.has(clientID)){
+            occupatns.set(clientID, {});
+          }      
+        }
+      
+        return resolve();
       }).catch((err) => {
         return reject(err);
       });
     });
   },
 
+  plotCourse: function(startRoomID, endRoomID){
+
+  }
+
   //If you are making a new function make sure to add a comma to the end of the function above this ^^
+
+  // Play soundID
+  //         // const connection = await clientVoice.channel.join();
+  //       // // Create a dispatcher
+  //       // const dispatcher = connection.play('sounds/2bfd6ef8-87cb-4a95-9ee6-d348e1fba4f1.wav');
+  
+  //       // dispatcher.on('start', () => {
+
+  //       // });
+  
+  //       // dispatcher.on('finish', () => {
+  //       //   connection.disconnect();
+  //       // });
 }

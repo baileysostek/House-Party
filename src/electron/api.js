@@ -7,8 +7,10 @@ let id = 0;
 
 ipcRenderer.on('api-response', (event, returnData) => {
   console.log("response:", returnData);
-  CALLBACKS[returnData[1]](returnData[0]);
-  delete CALLBACKS[returnData[1]];
+  if(typeof CALLBACKS[returnData[1]] === 'function'){
+    CALLBACKS[returnData[1]](returnData[0]);
+    delete CALLBACKS[returnData[1]];
+  }
 });
 
 function request(endpoint, args = [], callback = defaultCallback){

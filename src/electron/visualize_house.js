@@ -9,15 +9,13 @@ const api = require("./api.js");
   request('getRoomsAndEdges', [], (party_data) => {
 
     let graphdata = [];
-    party_data.rooms.forEach(obj => {
-      Object.entries(obj).forEach(([key, value]) => {
-          if(value.hasOwnProperty('data')){
-            console.log(`${key} ${value.data}`);
-            graphdata.push({'data':value.data});
-          }
-      });
-      console.log('-------------------');
+    Object.entries(party_data.rooms).forEach(([key, value]) => {
+        if(value.hasOwnProperty('data')){
+          console.log(`${key} ${value.data}`);
+          graphdata.push({'data':value.data});
+        }
     });
+    console.log('-------------------');
 
     for(edge of party_data.edges){
       graphdata.push(edge);
