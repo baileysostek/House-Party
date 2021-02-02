@@ -39,16 +39,16 @@
       }
     },
     "Kitchen":{
-
+      "data":{"id": "kitchen"}
     },
     "Living Room":{
-
+      "data":{"id": "livingroom"}
     },
     "Dylans Bedroom":{
       "data": {"id": "dylanbed"}
     },
     "Rachels Bedroom":{
-      "data": {"id": "rachelbed"},
+      "data": {"id": "rachelbed", "name":"Rachels Bedroom"},
       "entry_permission":{
         "rule":"HAS_ROLE",
         "meta":{
@@ -59,7 +59,7 @@
       }
     },
     "Pongos Bedroom":{
-
+      "data":{"id": "pongobedroom"}
     },
     "Stairs":{
       "data": {"id": "stairs"}

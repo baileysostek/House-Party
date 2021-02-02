@@ -69,6 +69,12 @@ module.exports = {
     //Load the Rooms
     let rooms = file.rooms;
 
+    //Set names
+    for(room in rooms){
+      //Set name and ID for cytoscape
+      file.rooms[room]['data']['name'] = room;
+    }
+
     //Wait for the bot to come online.
     client.on('ready', () => {
       //Create a container to hold all of our promises.
@@ -111,6 +117,9 @@ module.exports = {
         //For debug lets print out the rooms
         console.log(this.ROOMS);
         console.log(this.CHANNEL_ID_TO_ROOM_NAME_MAP);
+
+        //Now that our nodes have generated and the server is up and we have our channel IDS, we will send this data to electron.
+        
       }).catch((err) => {
         //If any errors were thrown this code will run.
         console.log(err);
@@ -119,7 +128,9 @@ module.exports = {
 
     //-------------------------- Define API Endpoints --------------------------------
     ipcMain.on('getRoomsAndEdges', (event, args) => {
-      event.reply('api-response', [file , args[1]]);
+      setTimeout(() => {
+        event.reply('api-response', [file , args[1]]);
+      }, 1000);
     })
     //--------------------------------------------------------------------------------
   },

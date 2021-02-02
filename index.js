@@ -220,18 +220,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
-})
+});
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
-})
-
-// // API endpoints
-// const { ipcMain } = require('electron')
-
-// ipcMain.on('getRoomsAndEdges', (event, arg) => {
-//   console.log(arg) // prints "ping"
-//   event.reply('asynchronous-reply', party);
-// });
+});
