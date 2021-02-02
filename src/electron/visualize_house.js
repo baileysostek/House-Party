@@ -1,22 +1,29 @@
 /* global fetch, cytoscape, document, window, require */
+const api = require("./api.js");
 
 (function(){
-  var toJson = function(res){ return res.json();
+  var toJson = function(res){
+    return res.json();
   };
   
-  let graphdata = [];
-  party_data.rooms.forEach(obj => {
-    Object.entries(obj).forEach(([key, value]) => {
-        if(value.hasOwnProperty('data')){
-          console.log(`${key} ${value.data}`);
-          graphdata.push({'data':value.data});
-        }
+  request('getRoomsAndEdges', [], (party_data) => {
+
+    let graphdata = [];
+    party_data.rooms.forEach(obj => {
+      Object.entries(obj).forEach(([key, value]) => {
+          if(value.hasOwnProperty('data')){
+            console.log(`${key} ${value.data}`);
+            graphdata.push({'data':value.data});
+          }
+      });
+      console.log('-------------------');
     });
-    console.log('-------------------');
-});
-for(edge of party_data.edges){graphdata.push(edge);}
-  console.log(graphdata);
-  // var data = JSON.parse(document.getElementById('graphdata')); 
+
+    for(edge of party_data.edges){
+      graphdata.push(edge);
+    }
+    console.log(graphdata);
+    // var data = JSON.parse(document.getElementById('graphdata')); 
     window.cy = cytoscape({
       container: document.getElementById('cy'),
 
@@ -24,7 +31,7 @@ for(edge of party_data.edges){graphdata.push(edge);}
         name: 'grid',
         cols: 3
       },
-  
+
       style: [ // the stylesheet for the graph
         {
           selector: 'node',
@@ -45,7 +52,8 @@ for(edge of party_data.edges){graphdata.push(edge);}
           }
         }
       ],
-  
+
       elements: graphdata
     });
-  })();
+  });
+})();

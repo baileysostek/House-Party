@@ -18,8 +18,6 @@ const roleManager   = require("./src/discord/roleManager");
 // Get a handle to the client
 const client = new Discord.Client();
 
-console.log(process.env);
-
 //This is the entrypoint specifically. When this line is hit the bot will go online and start running our code!
 client.login(process.env.DISCORD_BOT_TOKEN);
 
@@ -205,7 +203,6 @@ client.on("message", (message) => {
 });
 
 //Electron stuff
-
 function createWindow () {
   const window = new BrowserWindow({
     width: 800,
@@ -229,4 +226,18 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+})
+
+// // API endpoints
+// const { ipcMain } = require('electron')
+
+// ipcMain.on('getRoomsAndEdges', (event, arg) => {
+//   console.log(arg) // prints "ping"
+//   event.reply('asynchronous-reply', party);
+// });
+
+const { ipcMain } = require('electron')
+
+ipcMain.on('getRoomsAndEdges', (event, args) => {
+  event.reply('api-response', [party , args[1]]);
 })
