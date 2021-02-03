@@ -5,6 +5,7 @@ let cytoscape = require('cytoscape');
 let cola = require('cytoscape-cola');
 let cxtmenu = require('cytoscape-cxtmenu');
 let cxtmenu2 = require('cytoscape-context-menus');
+let edgehandles = require('cytoscape-edgehandles');
 
 cytoscape.use(cola); 
 
@@ -56,6 +57,58 @@ cytoscape.use(cola);
             'target-arrow-color': '#ccc',
             'target-arrow-shape': 'none',
             'curve-style': 'bezier'
+          }
+        },
+        {
+          selector: '.eh-handle',
+          style: {
+            'background-color': 'red',
+            'width': 3,
+            'height': 3,
+            'shape': 'ellipse',
+            'overlay-opacity': 0,
+            'border-width': 12, // makes the handle easier to hit
+            'border-opacity': 0
+          }
+        },
+
+        {
+          selector: '.eh-hover',
+          style: {
+            'background-color': 'red'
+          }
+        },
+
+        {
+          selector: '.eh-source',
+          style: {
+            'border-width': 2,
+            'border-color': 'red'
+          }
+        },
+
+        {
+          selector: '.eh-target',
+          style: {
+            'border-width': 2,
+            'border-color': 'red'
+          }
+        },
+
+        {
+          selector: '.eh-preview, .eh-ghost-edge',
+          style: {
+            'background-color': 'red',
+            'line-color': 'red',
+            'target-arrow-color': 'red',
+            'source-arrow-color': 'red'
+          }
+        },
+
+        {
+          selector: '.eh-ghost-edge.eh-preview-active',
+          style: {
+            'opacity': 0
           }
         }
       ],
@@ -249,6 +302,7 @@ cytoscape.use(cola);
         }
       ]
     });
+    let eh = cyto.edgehandles();
     window.cy = cyto
   });
 })();
