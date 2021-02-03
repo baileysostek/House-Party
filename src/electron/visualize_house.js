@@ -5,7 +5,7 @@ let cytoscape = require('cytoscape');
 let cola = require('cytoscape-cola');
 
 cytoscape.use(cola); 
-//contextMenus(cytoscape);
+
 (function(){
   var toJson = function(res){
     return res.json();
