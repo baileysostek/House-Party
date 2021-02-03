@@ -32,6 +32,10 @@ function request(endpoint, args = [], callback = defaultCallback){
   console.log("ping:", CALLBACKS);
 }
 
+function saveToConfigFile(object, callback){
+  request("saveToConfigFile", object, callback);
+}
+
 function defaultCallback(returnValue){
   console.log("Retuned:", returnValue);
 }

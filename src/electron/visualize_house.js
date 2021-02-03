@@ -14,8 +14,12 @@ cytoscape.use(cola);
   var toJson = function(res){
     return res.json();
   };
-  
+
   request('getRoomsAndEdges', [], (party_data) => {
+
+    saveToConfigFile(party_data, (data) => {
+      console.log("Save response:", data);
+    });
 
     let graphdata = [];
     Object.entries(party_data.rooms).forEach(([key, value]) => {

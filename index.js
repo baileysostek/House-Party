@@ -5,9 +5,11 @@ const Discord = require("discord.js");
 //Import dotEnv
 require('dotenv').config();
 //Electron Import
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 //Entry point
 const HTML_ENTRY_POINT = "./src/electron/index.html";
+//Import the file system
+const fs = require('fs');
 
 //Import our other classes here
 const roomManager   = require("./src/discord/roomManager");
@@ -227,3 +229,16 @@ app.on('activate', () => {
     createWindow();
   }
 });
+
+//-------------------------- Define API Endpoints --------------------------------
+ipcMain.on('saveToConfigFile', (event, args) => {
+  let possibleJSON = args[0];
+  if(possibleJSON !== undefined && possibleJSON !== null && possibleJSON.constructor == Object){
+    fs.writeFileSync("party.json", JSON.stringify(possibleJSON));
+    event.reply('api-response', [true , args[1]]);
+  }else{
+    //Return false, could not save
+    event.reply('api-response', [[false, "Error: passed object was not a json object"] , args[1]]);
+  }
+})
+//--------------------------------------------------------------------------------
