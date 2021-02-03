@@ -67,7 +67,7 @@ cytoscape.use(cola);
             'height': 3,
             'shape': 'ellipse',
             'overlay-opacity': 0,
-            'border-width': 12, // makes the handle easier to hit
+            'border-width': 4, // makes the handle easier to hit
             'border-opacity': 0
           }
         },
