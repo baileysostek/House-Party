@@ -59,7 +59,7 @@
       }
     },
     "Pongos Bedroom":{
-      "data":{"id": "pongobedroom"}
+      "data":{"id": "pongobed"}
     },
     "Stairs":{
       "data": {"id": "stairs"}
@@ -67,14 +67,19 @@
   },
   "edges": [
     {"data": {"id": "1", "source":"dining", "target": "bathroom"}},
-    {"data": {"id": "2", "source":"dining", "target": "closet"}},
-    {"data": {"id": "3", "source":"bathroom", "target": "closet"}},
+    {"data": {"id": "2", "source":"dining", "target": "livingroom"}},
+    {"data": {"id": "3", "source":"bathroom", "target": "livingroom"}},
     {"data": {"id": "4", "source":"stairs", "target": "dining"}},
     {"data": {"id": "5", "source":"stairs", "target": "closet"}},
     {"data": {"id": "6", "source":"stairs", "target": "bathroom"}},
     {"data": {"id": "7", "source":"stairs", "target": "rachelbed"}},
     {"data": {"id": "8", "source":"stairs", "target": "dylanbed"}},
-    {"data": {"id": "9", "source":"dylanbed", "target": "rachelbed"}}
+    {"data": {"id": "9", "source":"dylanbed", "target": "rachelbed"}},
+    {"data": {"id": "10", "source":"dylanbed", "target": "pongobed"}},
+    {"data": {"id": "11", "source":"rachelbed", "target": "pongobed"}},
+    {"data": {"id": "12", "source":"kitchen", "target": "stairs"}},
+    {"data": {"id": "13", "source":"kitchen", "target": "dining"}},
+    {"data": {"id": "14", "source":"livingroom", "target": "closet"}}
   ],
   "roles":[
     "Drunk",

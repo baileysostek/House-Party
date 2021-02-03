@@ -1,6 +1,11 @@
 /* global fetch, cytoscape, document, window, require */
 const api = require("./api.js");
 
+let cytoscape = require('cytoscape');
+let cola = require('cytoscape-cola');
+
+cytoscape.use(cola); 
+
 (function(){
   var toJson = function(res){
     return res.json();
@@ -22,12 +27,11 @@ const api = require("./api.js");
     }
     console.log(graphdata);
     // var data = JSON.parse(document.getElementById('graphdata')); 
-    window.cy = cytoscape({
+    let cyto = cytoscape({
       container: document.getElementById('cy'),
 
       layout: {
-        name: 'grid',
-        cols: 3
+        name: 'cola',
       },
 
       style: [ // the stylesheet for the graph
@@ -35,14 +39,16 @@ const api = require("./api.js");
           selector: 'node',
           style: {
             'background-color': '#666',
-            'label': 'data(name)'
+            'label': 'data(name)',
+            'width': 10,
+            'height': 10
           }
         },
     
         {
           selector: 'edge',
           style: {
-            'width': 3,
+            'width': 2,
             'line-color': '#ccc',
             'target-arrow-color': '#ccc',
             'target-arrow-shape': 'none',
@@ -53,5 +59,6 @@ const api = require("./api.js");
 
       elements: graphdata
     });
+    window.cy = cyto
   });
 })();
